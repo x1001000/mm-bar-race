@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "MacroMicro Bar Race",
+  "version": "1.0.0",
+  "description": "Add bar race visualization to Highcharts on MacroMicro.me",
+  "permissions": [
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://www.macromicro.me/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://www.macromicro.me/charts/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["page-script.js"],
+      "matches": ["https://www.macromicro.me/*"]
+    }
+  ]
+}

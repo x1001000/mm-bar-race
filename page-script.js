@@ -5,6 +5,11 @@
 
   let isBarRaceMode = false;
   let originalChartConfig = null;
+  let isPaused = false;
+  let currentChart = null;
+  let currentBarRaceData = null;
+  let currentDateLabel = null;
+  let currentDateIndex = 0;
 
   window.addEventListener('message', async (event) => {
     if (event.source !== window) return;
@@ -21,6 +26,10 @@
       } else {
         restoreOriginalChart();
       }
+    } else if (event.data.type === 'PLAY_PAUSE_BAR_RACE') {
+      togglePlayPause();
+    } else if (event.data.type === 'SEEK_BAR_RACE') {
+      seekToIndex(event.data.index);
     }
   });
 
@@ -159,11 +168,21 @@
       })
       .add();
 
+      // Store references for controls
+      currentChart = newChart;
+      currentBarRaceData = barRaceData;
+      currentDateLabel = dateLabel;
+      currentDateIndex = 0;
+      isPaused = false;
+
       // Start animation with the new chart
       animateBarRace(newChart, barRaceData, dateLabel);
       isBarRaceMode = true;
 
-      window.postMessage({ type: 'BAR_RACE_ENABLED' }, '*');
+      window.postMessage({
+        type: 'BAR_RACE_ENABLED',
+        totalDates: barRaceData.dates.length
+      }, '*');
 
     } catch (error) {
       console.error('Error enabling bar race:', error);
@@ -241,39 +260,81 @@
   let animationInterval = null;
 
   function animateBarRace(chart, barRaceData, dateLabel) {
-    let currentIndex = 0;
-
     // Clear any existing interval
     if (animationInterval) {
       clearInterval(animationInterval);
     }
 
     animationInterval = setInterval(() => {
-      if (currentIndex >= barRaceData.dates.length || !isBarRaceMode) {
-        clearInterval(animationInterval);
-        animationInterval = null;
+      if (isPaused || currentDateIndex >= barRaceData.dates.length || !isBarRaceMode) {
+        if (currentDateIndex >= barRaceData.dates.length) {
+          clearInterval(animationInterval);
+          animationInterval = null;
+          isPaused = true;
+          window.postMessage({ type: 'BAR_RACE_PAUSED' }, '*');
+        }
         return;
       }
 
-      const currentDate = barRaceData.dates[currentIndex];
+      updateChartToIndex(currentDateIndex);
+      currentDateIndex++;
 
-      // Update date label
-      if (dateLabel) {
-        dateLabel.attr({
-          text: currentDate
-        });
-      }
-
-      // Build new data array with latest values for each company
-      const newData = getDataForDate(barRaceData, currentDate);
-
-      // Update the single series with new data
-      if (chart.series[0]) {
-        chart.series[0].setData(newData, true);
-      }
-
-      currentIndex++;
+      // Send progress update
+      window.postMessage({
+        type: 'BAR_RACE_PROGRESS',
+        index: currentDateIndex
+      }, '*');
     }, 200); // 200ms per frame
+  }
+
+  function updateChartToIndex(index) {
+    if (!currentChart || !currentBarRaceData || !currentDateLabel) return;
+
+    const currentDate = currentBarRaceData.dates[index];
+
+    // Update date label
+    currentDateLabel.attr({
+      text: currentDate
+    });
+
+    // Build new data array with latest values for each company
+    const newData = getDataForDate(currentBarRaceData, currentDate);
+
+    // Update the single series with new data
+    if (currentChart.series[0]) {
+      currentChart.series[0].setData(newData, true);
+    }
+  }
+
+  function togglePlayPause() {
+    if (!isBarRaceMode) return;
+
+    isPaused = !isPaused;
+
+    if (!isPaused) {
+      // Resume animation
+      if (currentDateIndex >= currentBarRaceData.dates.length) {
+        // Restart from beginning
+        currentDateIndex = 0;
+      }
+      animateBarRace(currentChart, currentBarRaceData, currentDateLabel);
+      window.postMessage({ type: 'BAR_RACE_PLAYING' }, '*');
+    } else {
+      window.postMessage({ type: 'BAR_RACE_PAUSED' }, '*');
+    }
+  }
+
+  function seekToIndex(index) {
+    if (!isBarRaceMode || !currentBarRaceData) return;
+
+    currentDateIndex = Math.max(0, Math.min(index, currentBarRaceData.dates.length - 1));
+    updateChartToIndex(currentDateIndex);
+
+    // Send progress update
+    window.postMessage({
+      type: 'BAR_RACE_PROGRESS',
+      index: currentDateIndex
+    }, '*');
   }
 
   function restoreOriginalChart() {
@@ -284,6 +345,11 @@
     }
 
     isBarRaceMode = false;
+    isPaused = false;
+    currentChart = null;
+    currentBarRaceData = null;
+    currentDateLabel = null;
+    currentDateIndex = 0;
 
     // Simply reload the page to restore original chart
     window.location.reload();

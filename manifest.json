@@ -11,7 +11,10 @@
   ],
   "content_scripts": [
     {
-      "matches": ["https://www.macromicro.me/charts/*"],
+      "matches": [
+        "https://www.macromicro.me/charts/*",
+        "https://www.macromicro.me/collections/*"
+      ],
       "js": ["content.js"],
       "run_at": "document_idle"
     }

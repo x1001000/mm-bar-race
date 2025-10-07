@@ -25,7 +25,12 @@
   });
 
   function extractChartId() {
-    const match = window.location.pathname.match(/\/charts\/(\d+)/);
+    // Try to match /charts/{id} pattern
+    let match = window.location.pathname.match(/\/charts\/(\d+)/);
+    if (match) return match[1];
+
+    // Try to match /collections/{id}/{slug}/{chartId}/ pattern
+    match = window.location.pathname.match(/\/collections\/\d+\/[^\/]+\/(\d+)/);
     return match ? match[1] : null;
   }
 
@@ -183,7 +188,7 @@
       colors.push(color);
 
       const sequence = data.map(point => ({
-        y: point[1],
+        y: parseFloat(point[1]),
         date: point[0]
       }));
 

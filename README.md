@@ -16,13 +16,14 @@ A Chrome extension that adds animated bar race visualization to Highcharts on Ma
 1. Open Chrome and navigate to `chrome://extensions/`
 2. Enable "Developer mode" (toggle in top right)
 3. Click "Load unpacked"
-4. Select this project folder (`/Users/pp/PHIL/mm-bar-race/`)
+4. Select this project folder (`/Users/PHIL/Downloads/mm-bar-race/`)
 5. The extension is now installed!
 
 ## Usage
 
-1. Go to any MacroMicro chart page, for example:
-   https://www.macromicro.me/charts/119620/big-tech-capex-to-revenue
+1. Go to any MacroMicro chart page, for example:  
+   https://www.macromicro.me/collections/4093/us-big-tech/109709/big-techs-m7-capex  
+   https://www.macromicro.me/charts/109709/big-techs-m7-capex
 
 2. You'll see a floating "📊 Bar Race" button in the top right
 

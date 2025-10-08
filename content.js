@@ -15,34 +15,42 @@
 
   // Wait for the page to load and find the chart
   function injectBarRaceButton() {
-    // Find the chart controls area
-    const chartControls = document.querySelector('.chart-controls') ||
-                         document.querySelector('[class*="chart"]')?.parentElement;
+    if (document.getElementById('bar-race-toggle')) {
+      return;
+    }
 
-    if (!chartControls || document.getElementById('bar-race-toggle')) {
+    // Find the share button (分享) or any toolbar button to insert before
+    const shareButton = Array.from(document.querySelectorAll('button')).find(btn =>
+      btn.textContent.includes('分享')
+    );
+
+    if (!shareButton) {
       return;
     }
 
     // Create the bar race toggle button
     const button = document.createElement('button');
     button.id = 'bar-race-toggle';
-    button.textContent = '📊 Bar Race';
+    button.textContent = 'Bar Race';
+
+    // Copy the same classes from the share button if it has any
+    if (shareButton.className) {
+      button.className = shareButton.className;
+    }
+
     button.style.cssText = `
-      padding: 8px 16px;
-      margin: 8px;
+      padding: 6px 12px;
       background: #3bafda;
       color: white;
       border: none;
       border-radius: 4px;
       cursor: pointer;
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 400;
       transition: background 0.3s;
-      position: fixed;
-      top: 120px;
-      right: 20px;
-      z-index: 10000;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      height: 32px;
+      line-height: 1;
+      margin-right: 8px;
     `;
 
     button.addEventListener('mouseenter', () => {
@@ -58,7 +66,8 @@
       window.postMessage({ type: 'TOGGLE_BAR_RACE' }, '*');
     });
 
-    document.body.appendChild(button);
+    // Insert the button before the share button
+    shareButton.parentNode.insertBefore(button, shareButton);
   }
 
   function showBarRaceControls(totalDates) {
@@ -235,7 +244,7 @@
     if (event.data.type === 'BAR_RACE_ENABLED') {
       const button = document.getElementById('bar-race-toggle');
       if (button) {
-        button.textContent = '📈 Original View';
+        button.textContent = 'Original View';
         button.style.background = '#e9573f';
       }
       // Show controls
@@ -243,7 +252,7 @@
     } else if (event.data.type === 'BAR_RACE_DISABLED') {
       const button = document.getElementById('bar-race-toggle');
       if (button) {
-        button.textContent = '📊 Bar Race';
+        button.textContent = 'Bar Race';
         button.style.background = '#3bafda';
       }
       // Hide controls

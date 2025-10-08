@@ -54,11 +54,19 @@
     `;
 
     button.addEventListener('mouseenter', () => {
-      button.style.background = '#2a9ec9';
+      if (button.textContent === 'Bar Race') {
+        button.style.background = '#2a9ec9';
+      } else {
+        button.style.background = '#d14435';
+      }
     });
 
     button.addEventListener('mouseleave', () => {
-      button.style.background = '#3bafda';
+      if (button.textContent === 'Bar Race') {
+        button.style.background = '#3bafda';
+      } else {
+        button.style.background = '#e9573f';
+      }
     });
 
     button.addEventListener('click', () => {

@@ -42,20 +42,24 @@ The extension uses a two-script architecture:
 
 2. **page-script.js** - Runs in the page context:
    - Has access to the page's Highcharts global object
-   - Fetches chart data from MacroMicro API
+   - Extracts data directly from existing chart series
+   - Filters out unwanted series (e.g., "Total")
    - Transforms time series data into bar race format
    - Destroys and recreates the chart as a bar race
+   - Formats timestamps as readable dates (YYYY-MM-DD)
    - Animates through the time series showing value changes
+   - Provides play/pause controls and timeline slider
    - Restores the original chart when toggled off
 
 ## Data Flow
 
 1. User clicks the bar race button
 2. Content script sends message to page script
-3. Page script extracts chart ID from URL
-4. Fetches data from: `https://www.macromicro.me/charts/data/{chart_id}`
-5. Transforms data and recreates chart as bar race
-6. Animates through dates with 200ms intervals
+3. Page script extracts data directly from the existing Highcharts instance
+4. Filters out series named "Total" (case-insensitive)
+5. Transforms time series data (timestamps and values) into bar race format
+6. Destroys original chart and recreates as animated bar race
+7. Animates through dates with 200ms intervals, updating bars and date label
 
 ## Based On
 
@@ -68,4 +72,3 @@ The extension uses a two-script architecture:
 - `content.js` - Content script (extension context)
 - `page-script.js` - Page script (page context, has Highcharts access)
 - `README.md` - This file
-- `CLAUDE.md` - Project instructions

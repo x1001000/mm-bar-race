@@ -11,6 +11,15 @@
   let currentDateLabel = null;
   let currentDateIndex = 0;
 
+  // Helper function to format timestamp to readable date
+  function formatDate(timestamp) {
+    const date = new Date(timestamp);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   window.addEventListener('message', async (event) => {
     if (event.source !== window) return;
 
@@ -49,21 +58,7 @@
         throw new Error('Highcharts is not defined');
       }
 
-      // Fetch the chart data
-      const response = await fetch(`https://www.macromicro.me/charts/data/${chartId}`);
-      const data = await response.json();
-
-      const chartKey = `c:${chartId}`;
-      const chartData = data.data[chartKey];
-
-      if (!chartData) {
-        throw new Error('Could not load chart data');
-      }
-
-      // Transform data to bar race format
-      const barRaceData = transformToBarRace(chartData);
-
-      // Find the Highcharts instance
+      // Find the Highcharts instance first
       const chartContainer = document.querySelector('[data-highcharts-chart]');
       if (!chartContainer) {
         throw new Error('Could not find chart container');
@@ -74,6 +69,13 @@
 
       if (!chart) {
         throw new Error('Could not access Highcharts instance');
+      }
+
+      // Extract data directly from the existing chart
+      const barRaceData = transformFromExistingChart(chart);
+
+      if (!barRaceData) {
+        throw new Error('Could not extract data from chart');
       }
 
       // Store original config
@@ -134,8 +136,20 @@
             },
             dataLabels: {
               enabled: true,
-              align: 'right',
-              format: '{point.y:.1f}'
+              inside: false,
+              align: 'left',
+              x: 5,
+              style: {
+                fontSize: '13px',
+                fontWeight: 'bold',
+                textOutline: 'none'
+              },
+              formatter: function() {
+                return this.y.toLocaleString('en-US', {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 1
+                });
+              }
             }
           }
         },
@@ -153,7 +167,7 @@
 
       // Add date label
       const dateLabel = newChart.renderer.text(
-        barRaceData.dates[0],
+        formatDate(barRaceData.dates[0]),
         newChart.plotLeft + newChart.plotWidth - 150,
         newChart.plotTop + newChart.plotHeight / 2,
         true
@@ -190,37 +204,54 @@
     }
   }
 
-  function transformToBarRace(chartData) {
-    const config = chartData.info.chart_config;
-    const seriesData = chartData.series;
-
+  function transformFromExistingChart(chart) {
     const names = [];
     const colors = [];
     const sequences = [];
 
-    config.seriesConfigs.forEach((seriesConfig, idx) => {
-      const name = seriesConfig.name_en || seriesConfig.name_tc;
-      const color = seriesConfig.color;
-      const data = seriesData[idx];
+    // Extract data from each series in the chart
+    chart.series.forEach((series) => {
+      if (!series.visible) return; // Skip hidden series
+
+      // Skip series named "Total" or containing "total" (case-insensitive)
+      if (series.name && series.name.toLowerCase().includes('total')) {
+        console.log('Skipping series:', series.name);
+        return;
+      }
+
+      const name = series.name;
+      const color = series.color;
+      const data = series.data;
 
       names.push(name);
       colors.push(color);
 
-      const sequence = data.map(point => ({
-        y: parseFloat(point[1]),
-        date: point[0]
-      }));
+      // Extract all data points with x (timestamp/date) and y (value)
+      const sequence = data.map(point => {
+        const timestamp = point.x || point.category;
+        return {
+          y: typeof point.y === 'string' ? parseFloat(point.y) : point.y,
+          date: timestamp
+        };
+      }).filter(point => point.date !== undefined && point.y !== null && !isNaN(point.y));
 
       sequences.push(sequence);
     });
 
-    // Get all unique dates
+    if (names.length === 0) {
+      return null;
+    }
+
+    // Get all unique dates (timestamps)
     const allDates = new Set();
     sequences.forEach(seq => {
       seq.forEach(point => allDates.add(point.date));
     });
 
-    const sortedDates = Array.from(allDates).sort();
+    // Sort timestamps numerically
+    const sortedDates = Array.from(allDates).sort((a, b) => a - b);
+
+    console.log('Extracted chart data:', { names, colors, sequences, dates: sortedDates });
 
     return {
       names,
@@ -292,9 +323,9 @@
 
     const currentDate = currentBarRaceData.dates[index];
 
-    // Update date label
+    // Update date label with formatted date
     currentDateLabel.attr({
-      text: currentDate
+      text: formatDate(currentDate)
     });
 
     // Build new data array with latest values for each company

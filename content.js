@@ -19,9 +19,9 @@
       return;
     }
 
-    // Find the share button (分享) or any toolbar button to insert before
+    // Find the share button (分享/Share) or any toolbar button to insert before
     const shareButton = Array.from(document.querySelectorAll('button')).find(btn =>
-      btn.textContent.includes('分享')
+      btn.textContent.includes('分享') || btn.textContent.includes('Share')
     );
 
     if (!shareButton) {

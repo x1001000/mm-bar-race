@@ -7,13 +7,19 @@
     "activeTab"
   ],
   "host_permissions": [
-    "https://www.macromicro.me/*"
+    "https://www.macromicro.me/*",
+    "https://en.macromicro.me/*",
+    "https://sc.macromicro.me/*"
   ],
   "content_scripts": [
     {
       "matches": [
         "https://www.macromicro.me/charts/*",
-        "https://www.macromicro.me/collections/*"
+        "https://www.macromicro.me/collections/*",
+        "https://en.macromicro.me/charts/*",
+        "https://en.macromicro.me/collections/*",
+        "https://sc.macromicro.me/charts/*",
+        "https://sc.macromicro.me/collections/*"
       ],
       "js": ["content.js"],
       "run_at": "document_idle"
@@ -22,7 +28,11 @@
   "web_accessible_resources": [
     {
       "resources": ["page-script.js"],
-      "matches": ["https://www.macromicro.me/*"]
+      "matches": [
+        "https://www.macromicro.me/*",
+        "https://en.macromicro.me/*",
+        "https://sc.macromicro.me/*"
+      ]
     }
   ]
 }
